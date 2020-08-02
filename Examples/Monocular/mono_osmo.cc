@@ -53,26 +53,18 @@ int main(int argc, char **argv)
     }
 
     // Load all sequences:
-    int seq;
-    vector< vector<string> > vstrImageFilenames;
-    vector< vector<double> > vTimestampsCam;
-    vector<int> nImages;
-
-    vstrImageFilenames.resize(num_seq);
-    vTimestampsCam.resize(num_seq);
-    nImages.resize(num_seq);
-
-    int tot_images = 0;
-    for (seq = 0; seq<num_seq; seq++)
+    VideoCapture cap("/home/libing/dataset/osmo/DJI_0802.MP4");
+    if (!cap.isOpened())
     {
-        cout << "Loading images for sequence " << seq << "...";
-        LoadImages(string(argv[(2*seq)+3]) + "/mav0/cam0/data", string(argv[(2*seq)+4]), vstrImageFilenames[seq], vTimestampsCam[seq]);
-        cout << "LOADED!" << endl;
-
-        nImages[seq] = vstrImageFilenames[seq].size();
-        tot_images += nImages[seq];
+        cerr << "ERROR! Unable to open video\n";
+        return -1;
     }
+    int total_frames = cap.get(CV_CAP_PROP_FRAME_COUNT);
+    float fps = cap.get(CV_CAP_PROP_FPS);
 
+
+
+    int tot_images = total_frames;
     // Vector for tracking time statistics
     vector<float> vTimesTrack;
     vTimesTrack.resize(tot_images);
@@ -83,35 +75,15 @@ int main(int argc, char **argv)
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
     ORB_SLAM3::System SLAM(argv[1],argv[2],ORB_SLAM3::System::MONOCULAR, true);
 
-    VideoCapture cap("/home/libing/dataset/osmo/DJI_0802.MP4");
-    if (!cap.isOpened())
-    {
-        cerr << "ERROR! Unable to open video\n";
-        return -1;
-    }
-    int total_frames = cap.get(CV_CAP_PROP_FRAME_COUNT);
-    float fps = cap.get(CV_CAP_PROP_FPS);
-
     Mat frame;
-    for (seq = 0; seq<num_seq; seq++)
+    for (int seq = 0; seq<num_seq; seq++)
     {
 
         // Main loop
         cv::Mat im;
         int proccIm = 0;
-        for(int ni=0; ni<nImages[seq]; ni++, proccIm++)
+        for(int ni=0; ni<total_frames; ni++, proccIm++)
         {
-
-            // Read image from file
-            // im = cv::imread(vstrImageFilenames[seq][ni],CV_LOAD_IMAGE_UNCHANGED);
-            // double tframe = vTimestampsCam[seq][ni];
-
-            // if(im.empty())
-            // {
-            //     cerr << endl << "Failed to load image at: "
-            //          <<  vstrImageFilenames[seq][ni] << endl;
-            //     return 1;
-            // }
             cap >> frame;
             if (frame.empty())
             {
@@ -146,7 +118,7 @@ int main(int argc, char **argv)
             printf("ni: %d, seq: %d\n", ni, seq);
             // Wait to load the next frame
             double T=0;
-            if(ni<nImages[seq]-1)
+            if(ni<(total_frames - 1))
                 T = ( (ni + 1) * 1.0 / fps)-tframe;
             else if(ni>0)
                 T = tframe - ((ni - 1) * 1.0 / fps);
@@ -183,26 +155,3 @@ int main(int argc, char **argv)
     return 0;
 }
 
-void LoadImages(const string &strImagePath, const string &strPathTimes,
-                vector<string> &vstrImages, vector<double> &vTimeStamps)
-{
-    ifstream fTimes;
-    fTimes.open(strPathTimes.c_str());
-    vTimeStamps.reserve(5000);
-    vstrImages.reserve(5000);
-    while(!fTimes.eof())
-    {
-        string s;
-        getline(fTimes,s);
-        if(!s.empty())
-        {
-            stringstream ss;
-            ss << s;
-            vstrImages.push_back(strImagePath + "/" + ss.str() + ".png");
-            double t;
-            ss >> t;
-            vTimeStamps.push_back(t/1e9);
-
-        }
-    }
-}
