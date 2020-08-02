@@ -1,3 +1,28 @@
+# mono_osmo
+为何使用自己的视频, 就疯狂的在初始化啊?
+是不是一定要转化为灰度图啊?
+
+
+LM: Active map reset recieved
+LM: Active map reset, waiting...
+LM: Reseting current map in Local Mapping...
+LM: End reseting Local Mapping...
+LM: Reset free the mutex
+LM: Active map reset, Done!!!
+mnFirstFrameId = 0
+mnInitialFrameId = 30
+0 Frames had been set to lost
+vTimestampsCam 1.067733
+ttrack: 0.049252865999999999
+Changing the dataset
+LM: Active map reset recieved
+LM: Active map reset, waiting...
+LM: Reseting current map in Local Mapping...
+LM: End reseting Local Mapping...
+LM: Reset free the mutex
+LM: Active map reset, Done!!!
+
+
 # ORB-SLAM3
 
 ### V0.2: Beta version, 21 Jul 2020

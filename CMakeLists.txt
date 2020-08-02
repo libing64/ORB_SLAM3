@@ -152,6 +152,11 @@ target_link_libraries(stereo_tum_vi ${PROJECT_NAME})
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Examples/Monocular)
 
+
+add_executable(mono_osmo
+Examples/Monocular/mono_osmo.cc)
+target_link_libraries(mono_osmo ${PROJECT_NAME})
+
 add_executable(mono_tum
 Examples/Monocular/mono_tum.cc)
 target_link_libraries(mono_tum ${PROJECT_NAME})

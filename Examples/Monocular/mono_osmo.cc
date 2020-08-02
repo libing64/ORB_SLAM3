@@ -23,11 +23,13 @@
 #include<fstream>
 #include<chrono>
 
-#include<opencv2/core/core.hpp>
+#include <opencv2/core/core.hpp>
+#include<opencv2/opencv.hpp>
 
 #include<System.h>
 
 using namespace std;
+using namespace cv;
 
 void LoadImages(const string &strImagePath, const string &strPathTimes,
                 vector<string> &vstrImages, vector<double> &vTimeStamps);
@@ -81,6 +83,16 @@ int main(int argc, char **argv)
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
     ORB_SLAM3::System SLAM(argv[1],argv[2],ORB_SLAM3::System::MONOCULAR, true);
 
+    VideoCapture cap("/home/libing/dataset/osmo/DJI_0802.MP4");
+    if (!cap.isOpened())
+    {
+        cerr << "ERROR! Unable to open video\n";
+        return -1;
+    }
+    int total_frames = cap.get(CV_CAP_PROP_FRAME_COUNT);
+    float fps = cap.get(CV_CAP_PROP_FPS);
+
+    Mat frame;
     for (seq = 0; seq<num_seq; seq++)
     {
 
@@ -91,17 +103,25 @@ int main(int argc, char **argv)
         {
 
             // Read image from file
-            im = cv::imread(vstrImageFilenames[seq][ni],CV_LOAD_IMAGE_UNCHANGED);
-            double tframe = vTimestampsCam[seq][ni];
+            // im = cv::imread(vstrImageFilenames[seq][ni],CV_LOAD_IMAGE_UNCHANGED);
+            // double tframe = vTimestampsCam[seq][ni];
 
-            if(im.empty())
+            // if(im.empty())
+            // {
+            //     cerr << endl << "Failed to load image at: "
+            //          <<  vstrImageFilenames[seq][ni] << endl;
+            //     return 1;
+            // }
+            cap >> frame;
+            if (frame.empty())
             {
-                cerr << endl << "Failed to load image at: "
-                     <<  vstrImageFilenames[seq][ni] << endl;
-                return 1;
+                cerr << "ERROR! blank frame grabbed\n";
+                break;
             }
+            resize(frame, im, cv::Size(720, 480));
+            float tframe = ni * 1.0 / fps;
 
-    #ifdef COMPILEDWITHC11
+#ifdef COMPILEDWITHC11
             std::chrono::steady_clock::time_point t1 = std::chrono::steady_clock::now();
     #else
             std::chrono::monotonic_clock::time_point t1 = std::chrono::monotonic_clock::now();
@@ -122,14 +142,14 @@ int main(int argc, char **argv)
             vTimesTrack[ni]=ttrack;
 
             cout << "ttrack: " << ttrack << endl;
-            printf("vTimestampsCam %lf\n", vTimestampsCam[seq][ni]);
+            printf("vTimestampsCam %lf\n", ni * 1.0 / fps);
             printf("ni: %d, seq: %d\n", ni, seq);
             // Wait to load the next frame
             double T=0;
             if(ni<nImages[seq]-1)
-                T = vTimestampsCam[seq][ni+1]-tframe;
+                T = ( (ni + 1) * 1.0 / fps)-tframe;
             else if(ni>0)
-                T = tframe-vTimestampsCam[seq][ni-1];
+                T = tframe - ((ni - 1) * 1.0 / fps);
 
             if(ttrack<T)
                 usleep((T-ttrack)*1e6); // 1e6
